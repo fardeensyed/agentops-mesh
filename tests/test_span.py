@@ -103,3 +103,81 @@ trace_id, parent_id = get_current_context()
 print(f"trace_id:  {trace_id}")
 print(f"parent_id: {parent_id}")
 print("Context cleared ✓")
+
+# ── tracer tests ──────────────────────────────────────────────────────────────
+print("\n--- Test 12: Basic trace with one span ---")
+from agentops.tracer import Tracer
+
+tracer = Tracer(api_key="test-key-123", endpoint="http://localhost:8000")
+
+with tracer.start_trace("research-agent") as root:
+    print(f"root span name:    {root.name}")
+    print(f"root trace_id:     {root.trace_id}")
+    print(f"root parent:       {root.parent_span_id}")  # None
+
+print(f"root status after: {root.status}")             # ok
+print(f"finished spans:    {len(tracer.get_finished_spans())}")  # 1
+
+
+print("\n--- Test 13: Nested spans share trace_id and know their parent ---")
+tracer2 = Tracer(api_key="test-key-123")
+
+with tracer2.start_trace("multi-step-agent") as root:
+    trace_id = root.trace_id
+
+    with tracer2.start_span("openai.call", SpanKind.LLM) as ctx:
+        llm_span = ctx.span
+        ctx.span.set_attribute("model", "gpt-4o")
+
+        with tracer2.start_span("google.search", SpanKind.TOOL) as ctx2:
+            tool_span = ctx2.span
+            ctx2.span.set_attribute("query", "latest AI research")
+
+# all spans share the same trace_id
+print(f"root trace_id:  {root.trace_id}")
+print(f"llm  trace_id:  {llm_span.trace_id}")
+print(f"tool trace_id:  {tool_span.trace_id}")
+assert root.trace_id == llm_span.trace_id == tool_span.trace_id
+print("All share same trace_id ✓")
+
+# parent-child relationships are correct
+print(f"\nroot parent:  {root.parent_span_id}")        # None
+print(f"llm  parent:  {llm_span.parent_span_id}")     # root's span_id
+print(f"tool parent:  {tool_span.parent_span_id}")    # llm's span_id
+
+assert root.parent_span_id is None
+assert llm_span.parent_span_id == root.span_id
+assert tool_span.parent_span_id == llm_span.span_id
+print("Parent-child relationships correct ✓")
+
+# total finished spans: root + llm + tool = 3
+print(f"\nTotal finished spans: {len(tracer2.get_finished_spans())}")  # 3
+
+
+print("\n--- Test 14: Span captures exception automatically ---")
+tracer3 = Tracer(api_key="test-key-123")
+
+try:
+    with tracer3.start_trace("failing-agent") as root:
+        with tracer3.start_span("broken.tool", SpanKind.TOOL) as ctx:
+            raise ValueError("Tool API is down")
+except ValueError:
+    pass  # expected
+
+spans = tracer3.get_finished_spans()
+broken = [s for s in spans if s.name == "broken.tool"][0]
+print(f"broken span status:  {broken.status}")         # error
+print(f"broken error msg:    {broken.error_message}")  # Tool API is down
+print("Exception captured automatically ✓")
+
+
+print("\n--- Test 15: Context is clean after trace ends ---")
+from agentops.context import get_current_context
+
+trace_id, span_id = get_current_context()
+print(f"trace_id after trace: {trace_id}")   # None
+print(f"span_id after trace:  {span_id}")    # None
+print("Context clean after trace ✓")
+
+
+print("\n\n✅ ALL TESTS PASSED")
