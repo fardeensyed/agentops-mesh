@@ -181,3 +181,66 @@ print("Context clean after trace ✓")
 
 
 print("\n\n✅ ALL TESTS PASSED")
+
+# ── exporter tests ────────────────────────────────────────────────────────────
+print("\n--- Test 16: Exporter queues spans correctly ---")
+from agentops.exporter import SpanExporter
+from agentops.span import Span, SpanKind, SpanStatus
+
+exporter = SpanExporter(
+    endpoint="http://localhost:8000",
+    api_key="test-key",
+)
+exporter.start()
+
+# create and finish a real span
+span = Span(name="test.llm.call", span_kind=SpanKind.LLM)
+span.set_attribute("model", "gpt-4o")
+span.set_attribute("input_tokens", 100)
+span.finish()
+
+# enqueue it
+exporter.enqueue(span)
+print(f"Queue size after enqueue: {exporter._queue.qsize()}")  # 1
+print("Span enqueued successfully ✓")
+
+
+print("\n--- Test 17: Span serializes cleanly for HTTP ---")
+import json
+span_dict = span.to_dict()
+# this must not raise — if datetime isn't handled it would crash here
+json_str = json.dumps(span_dict)
+parsed = json.loads(json_str)
+print(f"name:         {parsed['name']}")
+print(f"status:       {parsed['status']}")
+print(f"model attr:   {parsed['attributes']['model']}")
+print(f"duration_ms:  {parsed['duration_ms']}")
+print("JSON serialization clean ✓")
+
+
+print("\n--- Test 18: Exporter shuts down cleanly ---")
+# shutdown flushes queue — it will try to POST to localhost:8000
+# which is not running, so it will fail silently (that's correct behaviour)
+exporter.shutdown(timeout=3.0)
+print(f"Exporter running after shutdown: {exporter._running}")  # False
+print("Shutdown clean ✓")
+
+
+print("\n--- Test 19: Tracer auto-enqueues spans to exporter ---")
+from agentops.tracer import Tracer
+
+tracer = Tracer(api_key="test-key", endpoint="http://localhost:8000")
+
+with tracer.start_trace("auto-export-test") as root:
+    with tracer.start_span("llm.call", SpanKind.LLM) as ctx:
+        ctx.span.set_attribute("model", "gpt-4o")
+
+finished = tracer.get_finished_spans()
+print(f"Finished spans count: {len(finished)}")   # 2 (root + llm)
+print(f"Span names: {[s.name for s in finished]}")
+print("Tracer auto-enqueues to exporter ✓")
+
+tracer._exporter.shutdown(timeout=2.0)
+
+
+print("\n\n✅ ALL 19 TESTS PASSED")

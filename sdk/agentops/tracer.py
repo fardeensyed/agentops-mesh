@@ -11,6 +11,7 @@ from .context import (
     set_context,
 )
 from .span import Span, SpanKind, SpanStatus
+from .exporter import SpanExporter
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -86,6 +87,11 @@ class Tracer:
         self.api_key = api_key
         self.endpoint = endpoint
         self.service_name = service_name
+        self._exporter = SpanExporter(
+             api_key=api_key,
+             endpoint=endpoint,
+)
+        self._exporter.start()
 
         # stores (span, trace_token, span_token) while span is active
         # so we can restore context when it closes
@@ -153,8 +159,11 @@ class Tracer:
             reset_context(trace_tok, span_tok)
             clear_context()
             self._finished_spans.append(root_span)
+            self._exporter.enqueue(root_span)
             self._active_spans.pop(root_span.span_id, None)
             self._current_trace_id = None
+             # send to background exporter
+            
 
     def start_span(
         self,
@@ -222,6 +231,7 @@ class Tracer:
 
         # add to finished list — exporter will pick this up
         self._finished_spans.append(span)
+        self._exporter.enqueue(span)
 
     # ── Inspection helpers ───────────────────────────────────────────────────
 
@@ -236,3 +246,6 @@ class Tracer:
     def get_active_span_count(self) -> int:
         """How many spans are currently open."""
         return len(self._active_spans)
+    def shutdown(self) -> None:
+         """ Flush any remaining spans and stop the background exporter."""
+         self._exporter.shutdown()
