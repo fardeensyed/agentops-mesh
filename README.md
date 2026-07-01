@@ -52,3 +52,96 @@ with tracer.start_trace("research-agent") as root:
 - [ ] Evaluation studio (trace replay, A/B model testing)
 
 ## Architecture
+ Your AI Agent
+│
+▼
+Python SDK (this repo)
+├── span.py       — unit of work data model
+├── context.py    — propagates trace/span IDs automatically
+├── tracer.py     — creates and manages span lifecycle
+└── exporter.py   — batches and ships spans over HTTP
+│
+▼
+Ingestion Gateway (FastAPI)
+│
+├──▶ ClickHouse  (traces — billions of rows, fast aggregation)
+└──▶ PostgreSQL  (metadata — users, projects, API keys)
+│
+▼
+Next.js Dashboard
+├── Trace waterfall view
+├── Cost per task analytics
+└── Governance policy controls
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| SDK | Python 3.13 + OpenTelemetry-compatible |
+| Ingestion | FastAPI → Go (high throughput) |
+| Trace Storage | ClickHouse |
+| Metadata | PostgreSQL |
+| Frontend | Next.js + Tailwind + Recharts |
+| Deployment | Docker + Kubernetes |
+
+## Project Status
+
+**Month 1 of 6 — SDK core complete**
+
+| Component | Status |
+|---|---|
+| Span data model | ✅ Complete |
+| Context propagation | ✅ Complete |
+| Tracer (span lifecycle) | ✅ Complete |
+| Background exporter | ✅ Complete |
+| OpenAI auto-instrumentation | 🔄 In progress |
+| FastAPI ingestion gateway | ⏳ Up next |
+| ClickHouse + PostgreSQL | ⏳ Planned |
+| Next.js dashboard | ⏳ Planned |
+
+## Getting Started
+
+```bash
+# clone the repo
+git clone https://github.com/fardeensyed/agentops-mesh.git
+cd agentops-mesh
+
+# create virtual environment
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # Mac/Linux
+
+# install dependencies
+pip install httpx tenacity
+
+# run tests
+python tests/test_span.py
+```
+
+## Differentiation
+
+- **Framework-agnostic** — one SDK for all agent frameworks
+- **Hermes Agent first-class support** — 140K+ star community,
+  no existing observability tool
+- **Governance-first** — PII redaction, spend limits, audit logs
+  for regulated industries
+- **Cost-per-task ROI** — business metrics, not just token counts
+
+## Roadmap
+
+| Month | Milestone |
+|---|---|
+| 1 | Python SDK + ingestion gateway + minimal dashboard |
+| 2 | LangChain + CrewAI + Hermes integrations. HN launch |
+| 3 | Evaluation engine. 3 technical blog posts |
+| 4 | Cost analytics + governance policies. 500 GitHub stars |
+| 5 | Hosted cloud version. First paying teams |
+| 6 | YC application or pre-seed raise |
+
+## Contributing
+
+Open-source, MIT licensed. Issues and PRs welcome.
+
+---
+
+Built by [@fardeensyed](https://github.com/fardeensyed)
