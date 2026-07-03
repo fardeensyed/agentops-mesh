@@ -1,19 +1,32 @@
-def __init__(
-    self,
+from .tracer import Tracer
+from .span import Span, SpanKind, SpanStatus
+from .exporter import SpanExporter
+
+_global_tracer: Tracer = None
+
+def init(
     api_key: str,
     endpoint: str = "http://localhost:8000",
     service_name: str = "agentops-sdk",
-):
-    self.api_key = api_key
-    self.endpoint = endpoint
-    self.service_name = service_name
-    self._active_spans: Dict[str, tuple] = {}
-    self._finished_spans: List[Span] = []
-    self._current_trace_id: Optional[str] = None
-
-    # create and start the background exporter
-    self._exporter = SpanExporter(
-        endpoint=endpoint,
+    patch_openai: bool = True,
+) -> Tracer:
+    global _global_tracer
+    _global_tracer = Tracer(
         api_key=api_key,
+        endpoint=endpoint,
+        service_name=service_name,
     )
-    self._exporter.start()
+    if patch_openai:
+        from .integrations.openai import patch_openai as _patch
+        _patch(_global_tracer)
+    return _global_tracer
+
+def get_tracer() -> Tracer:
+    if _global_tracer is None:
+        raise RuntimeError("Call agentops.init() first")
+    return _global_tracer
+
+__all__ = [
+    "init", "get_tracer", "Tracer",
+    "Span", "SpanKind", "SpanStatus", "SpanExporter",
+]
