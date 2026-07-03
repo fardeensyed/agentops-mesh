@@ -58,5 +58,5 @@ def patch_openai(tracer: "Tracer") -> None:
             span_ctx.__exit__(type(e), e, e.__traceback__)
             raise
 
-    # replace the real function with our wrapped version
+    # replace the real function with our wrapped clean version
     openai.chat.completions.create = patched_create
