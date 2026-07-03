@@ -103,6 +103,7 @@ class Tracer:
 
         # will be set when start_trace() is called
         self._current_trace_id: Optional[str] = None
+        self._max_finished_spans = 1000
 
     # ── Trace management ─────────────────────────────────────────────────────
 
@@ -232,6 +233,8 @@ class Tracer:
         # add to finished list — exporter will pick this up
         self._finished_spans.append(span)
         self._exporter.enqueue(span)
+        if len(self._finished_spans) > self._max_finished_spans:
+         self._finished_spans = self._finished_spans[-self._max_finished_spans:]
 
     # ── Inspection helpers ───────────────────────────────────────────────────
 
