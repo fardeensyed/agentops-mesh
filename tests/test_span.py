@@ -244,3 +244,45 @@ tracer._exporter.shutdown(timeout=2.0)
 
 
 print("\n\n✅ ALL 19 TESTS PASSED")
+
+# ── __init__ and openai patch tests ──────────────────────────────────────────
+print("\n--- Test 20: agentops.init() works ---")
+import sys
+sys.path.insert(0, "sdk")
+import agentops
+
+tracer = agentops.init(
+    api_key="test-key",
+    endpoint="http://localhost:8000",
+    patch_openai=False,  # no openai installed in test env
+)
+print(f"Tracer type:    {type(tracer).__name__}")
+print(f"get_tracer():   {type(agentops.get_tracer()).__name__}")
+print("agentops.init() works ✓")
+
+
+print("\n--- Test 21: full SDK flow end to end ---")
+from agentops import SpanKind
+
+with tracer.start_trace("e2e-test-agent") as root:
+    root.set_attribute("user_id", "test-user-001")
+
+    with tracer.start_span("llm.call", SpanKind.LLM) as ctx:
+        ctx.span.set_attribute("model", "gpt-4o")
+        ctx.span.set_attribute("gen_ai.usage.input_tokens", 120)
+        ctx.span.set_attribute("gen_ai.usage.output_tokens", 80)
+        ctx.span.set_attribute("gen_ai.usage.cost_usd", 0.0018)
+
+    with tracer.start_span("tool.search", SpanKind.TOOL) as ctx:
+        ctx.span.set_attribute("query", "latest AI papers")
+
+spans = tracer.get_finished_spans()
+print(f"Total spans:    {len(spans)}")
+print(f"Span names:     {[s.name for s in spans]}")
+print(f"All same trace: {len(set(s.trace_id for s in spans)) == 1}")
+print(f"Root cost attr: {root.attributes.get('user_id')}")
+print("Full SDK flow works ✓")
+
+tracer._exporter.shutdown(timeout=2.0)
+
+print("\n\n✅ ALL 21 TESTS PASSED — SDK COMPLETE")

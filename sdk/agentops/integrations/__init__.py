@@ -8,6 +8,7 @@ def init(
     api_key: str,
     endpoint: str = "http://localhost:8000",
     service_name: str = "agentops-sdk",
+    patch_openai: bool = True,
 ) -> Tracer:
     global _global_tracer
     _global_tracer = Tracer(
@@ -15,6 +16,9 @@ def init(
         endpoint=endpoint,
         service_name=service_name,
     )
+    if patch_openai:
+        from .integrations.openai import patch_openai as _patch
+        _patch(_global_tracer)
     return _global_tracer
 
 def get_tracer() -> Tracer:
