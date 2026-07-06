@@ -54,7 +54,9 @@ with tracer.start_trace("research-agent") as root:
 
 
 ## Architecture
- Your AI Agent
+
+```text
+Your AI Agent
 │
 ▼
 Python SDK (this repo)
@@ -74,6 +76,7 @@ Next.js Dashboard
 ├── Trace waterfall view
 ├── Cost per task analytics
 └── Governance policy controls
+```
 
 ## Tech Stack
 
