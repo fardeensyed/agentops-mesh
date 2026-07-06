@@ -44,12 +44,14 @@ with tracer.start_trace("research-agent") as root:
 - [x] Context propagation across nested and async agent calls
 - [x] Automatic span lifecycle management with exception capture
 - [x] Background HTTP exporter with batching and retry
-- [ ] OpenAI / LangChain / CrewAI auto-instrumentation
-- [ ] FastAPI ingestion gateway
-- [ ] ClickHouse trace storage
-- [ ] Cost & ROI analytics dashboard
+- [x] OpenAI auto-instrumentation
+- [x] FastAPI ingestion gateway
+- [x] ClickHouse trace storage (persistent)
+- [x] PostgreSQL metadata schema (users, projects, api_keys, agent_configs)
+- [ ] Next.js dashboard
 - [ ] Governance layer (PII redaction, spend limits, audit logs)
 - [ ] Evaluation studio (trace replay, A/B model testing)
+
 
 ## Architecture
  Your AI Agent
@@ -86,7 +88,7 @@ Next.js Dashboard
 
 ## Project Status
 
-**Month 1 of 6 — SDK core complete**
+**Month 1 of 6 — Full backend stack operational**
 
 | Component | Status |
 |---|---|
@@ -94,10 +96,12 @@ Next.js Dashboard
 | Context propagation | ✅ Complete |
 | Tracer (span lifecycle) | ✅ Complete |
 | Background exporter | ✅ Complete |
-| OpenAI auto-instrumentation | 🔄 In progress |
-| FastAPI ingestion gateway | ⏳ Up next |
-| ClickHouse + PostgreSQL | ⏳ Planned |
-| Next.js dashboard | ⏳ Planned |
+| OpenAI auto-instrumentation | ✅ Complete  |
+| FastAPI ingestion gateway | ✅ Complete  |
+| ClickHouse + PostgreSQL |✅ Complete |
+| Next.js dashboard | ⏳ Up next  |
+
+See `TROUBLESHOOTING.md` for real issues hit and fixed during development.
 
 ## Getting Started
 
