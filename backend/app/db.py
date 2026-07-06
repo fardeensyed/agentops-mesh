@@ -4,6 +4,7 @@ from .models import Base
 
 DATABASE_URL = "postgresql://postgres:agentops123@127.0.0.1:5433/agentops"
 
+
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
