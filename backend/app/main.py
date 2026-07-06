@@ -29,9 +29,10 @@ class SpanBatch(BaseModel):
     service: str
 
 
+
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "okkk"}
 
 
 @app.post("/v1/spans")
