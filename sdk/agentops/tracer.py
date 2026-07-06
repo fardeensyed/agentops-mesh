@@ -71,7 +71,7 @@ class Tracer:
     Creates and manages spans and traces.
 
     Usage:
-        tracer = Tracer(api_key="your-key", endpoint="http://localhost:8000")
+        tracer = Tracer(api_key="your-key", endpoint="http://localhost:8001")
 
         with tracer.start_trace("my-agent-run"):
             with tracer.start_span("openai.call", SpanKind.LLM) as ctx:
@@ -81,7 +81,7 @@ class Tracer:
     def __init__(
         self,
         api_key: str,
-        endpoint: str = "http://localhost:8000",
+        endpoint: str = "http://localhost:8001",
         service_name: str = "agentops-sdk",
     ):
         self.api_key = api_key

@@ -108,7 +108,7 @@ print("Context cleared ✓")
 print("\n--- Test 12: Basic trace with one span ---")
 from agentops.tracer import Tracer
 
-tracer = Tracer(api_key="test-key-123", endpoint="http://localhost:8000")
+tracer = Tracer(api_key="test-key-123", endpoint="http://localhost:8001")
 
 with tracer.start_trace("research-agent") as root:
     print(f"root span name:    {root.name}")
@@ -188,7 +188,7 @@ from agentops.exporter import SpanExporter
 from agentops.span import Span, SpanKind, SpanStatus
 
 exporter = SpanExporter(
-    endpoint="http://localhost:8000",
+    endpoint="http://localhost:8001",
     api_key="test-key",
 )
 exporter.start()
@@ -229,7 +229,7 @@ print("Shutdown clean ✓")
 print("\n--- Test 19: Tracer auto-enqueues spans to exporter ---")
 from agentops.tracer import Tracer
 
-tracer = Tracer(api_key="test-key", endpoint="http://localhost:8000")
+tracer = Tracer(api_key="test-key", endpoint="http://localhost:8001")
 
 with tracer.start_trace("auto-export-test") as root:
     with tracer.start_span("llm.call", SpanKind.LLM) as ctx:
@@ -253,7 +253,7 @@ import agentops
 
 tracer = agentops.init(
     api_key="test-key",
-    endpoint="http://localhost:8000",
+    endpoint="http://localhost:8001",
     patch_openai=False,  # no openai installed in test env
 )
 print(f"Tracer type:    {type(tracer).__name__}")

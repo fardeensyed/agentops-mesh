@@ -6,7 +6,7 @@ _global_tracer: Tracer = None
 
 def init(
     api_key: str,
-    endpoint: str = "http://localhost:8000",
+    endpoint: str = "http://localhost:8001",
     service_name: str = "agentops-sdk",
     patch_openai: bool = True,
 ) -> Tracer:

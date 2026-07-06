@@ -60,3 +60,4 @@ def patch_openai(tracer: "Tracer") -> None:
 
     # replace the real function with our wrapped clean version
     openai.chat.completions.create = patched_create
+    

@@ -1,10 +1,18 @@
 from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
+from .db import init_db, get_db
+from .models import User, Project, APIKey
+from fastapi import Depends
+from sqlalchemy.orm import Session
 import clickhouse_connect
 import json
 
 app = FastAPI(title="AgentOps Mesh Gateway")
+
+@app.on_event("startup")
+def startup():
+    init_db()
 
 # ── ClickHouse connection ────────────────────────────────────────────────────
 # created once when the server starts, reused for every request
