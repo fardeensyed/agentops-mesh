@@ -49,3 +49,4 @@ Updated `DATABASE_URL` to use port `5433`.
 a port — critical for diagnosing "wrong service answered" bugs.
 **Reminder:** This project's Postgres always runs on port 5433, not 
 the default 5432.
+
