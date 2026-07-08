@@ -50,3 +50,17 @@ a port — critical for diagnosing "wrong service answered" bugs.
 **Reminder:** This project's Postgres always runs on port 5433, not 
 the default 5432.
 
+## 8. ClickHouse "Attempt to execute concurrent queries" error
+**Error:** clickhouse_connect.driver.exceptions.ProgrammingError: 
+Attempt to execute concurrent queries within the same session
+**Cause:** FastAPI used ONE global ClickHouse client for all requests. 
+When multiple spans were sent nearly simultaneously (e.g. from a fast 
+test loop), concurrent requests tried to use the same client 
+connection at once — ClickHouse doesn't support this.
+**Fix:** Changed from a single global `client` to a function 
+`get_clickhouse_client()` that creates a fresh client per request. 
+Each request now has its own isolated connection.
+**Lesson:** Database client objects are often NOT thread-safe by 
+default. In a web server handling concurrent requests, shared 
+connections need either per-request instances or a proper connection 
+pool — never a single global object used across requests.
