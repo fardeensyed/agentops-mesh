@@ -5,10 +5,18 @@ from .db import init_db, get_db
 from .models import User, Project, APIKey
 from fastapi import Depends
 from sqlalchemy.orm import Session
+from fastapi.middleware.cors import CORSMiddleware
 import clickhouse_connect
 import json
 
 app = FastAPI(title="AgentOps Mesh Gateway")
+# allows Next.js dev server (localhost:3000) to call this API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.on_event("startup")
 def startup():
@@ -91,3 +99,23 @@ def list_spans(limit: int = 50):
 
     spans = [dict(zip(columns, row)) for row in rows]
     return {"spans": spans, "total": len(spans)}
+@app.get("/v1/traces")
+def list_traces(limit: int = 50):
+    """Groups spans by trace_id — one row per agent run, not per span."""
+    result = client.query(f"""
+        SELECT
+            trace_id,
+            argMin(name, start_time) as root_name,
+            min(start_time) as started_at,
+            max(end_time) as ended_at,
+            count() as span_count,
+            sumIf(1, status = 'error') as error_count
+        FROM spans
+        GROUP BY trace_id
+        ORDER BY started_at DESC
+        LIMIT {limit}
+    """)
+    columns = result.column_names
+    rows = result.result_rows
+    traces = [dict(zip(columns, row)) for row in rows]
+    return {"traces": traces, "total": len(traces)}
