@@ -100,3 +100,16 @@ def list_traces(limit: int = 50):
     columns = result.column_names
     rows = result.result_rows
     return {"traces": [dict(zip(columns, row)) for row in rows], "total": len(rows)}
+
+@app.get("/v1/traces/{trace_id}")
+def get_trace_detail(trace_id: str):
+    client = get_clickhouse_client()
+    result = client.query(f"""
+        SELECT * FROM spans
+        WHERE trace_id = '{trace_id}'
+        ORDER BY start_time ASC
+    """)
+    columns = result.column_names
+    rows = result.result_rows
+    spans = [dict(zip(columns, row)) for row in rows]
+    return {"trace_id": trace_id, "spans": spans}
