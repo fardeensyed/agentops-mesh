@@ -38,6 +38,12 @@ with tracer.start_trace("research-agent") as root:
         # your agent code here — fully instrumented
 ```
 
+## Live Dashboard
+
+Every trace and span is queryable and clickable in a live Next.js
+dashboard — from the trace list down to individual span waterfalls,
+with error status propagated visually up the tree.
+
 ## Core Features
 
 - [x] Universal span and trace data model (OpenTelemetry-compatible)
@@ -48,10 +54,10 @@ with tracer.start_trace("research-agent") as root:
 - [x] FastAPI ingestion gateway
 - [x] ClickHouse trace storage (persistent)
 - [x] PostgreSQL metadata schema (users, projects, api_keys, agent_configs)
-- [ ] Next.js dashboard
+- [x] Next.js dashboard — trace list + span waterfall detail view
+- [ ] Cost & ROI analytics dashboard
 - [ ] Governance layer (PII redaction, spend limits, audit logs)
 - [ ] Evaluation studio (trace replay, A/B model testing)
-
 
 ## Architecture
 
@@ -73,9 +79,10 @@ Ingestion Gateway (FastAPI)
 │
 ▼
 Next.js Dashboard
-├── Trace waterfall view
-├── Cost per task analytics
-└── Governance policy controls
+├── Trace list view          ✅
+├── Span waterfall detail    ✅
+├── Cost per task analytics  ⏳
+└── Governance policy controls ⏳
 ```
 
 ## Tech Stack
@@ -86,12 +93,12 @@ Next.js Dashboard
 | Ingestion | FastAPI → Go (high throughput) |
 | Trace Storage | ClickHouse |
 | Metadata | PostgreSQL |
-| Frontend | Next.js + Tailwind + Recharts |
+| Frontend | Next.js + Tailwind |
 | Deployment | Docker + Kubernetes |
 
 ## Project Status
 
-**Month 1 of 6 — Full backend stack operational**
+**Month 1 of 6 — Full stack operational, end-to-end**
 
 | Component | Status |
 |---|---|
@@ -99,10 +106,13 @@ Next.js Dashboard
 | Context propagation | ✅ Complete |
 | Tracer (span lifecycle) | ✅ Complete |
 | Background exporter | ✅ Complete |
-| OpenAI auto-instrumentation | ✅ Complete  |
-| FastAPI ingestion gateway | ✅ Complete  |
-| ClickHouse + PostgreSQL |✅ Complete |
-| Next.js dashboard | ⏳ Up next  |
+| OpenAI auto-instrumentation | ✅ Complete |
+| FastAPI ingestion gateway | ✅ Complete |
+| ClickHouse + PostgreSQL | ✅ Complete |
+| Next.js dashboard (list + detail) | ✅ Complete |
+| Cost analytics | ⏳ Up next |
+| LangChain / CrewAI integrations | ⏳ Planned |
+| Governance layer | ⏳ Planned |
 
 See `TROUBLESHOOTING.md` for real issues hit and fixed during development.
 
@@ -119,10 +129,19 @@ python -m venv .venv
 source .venv/bin/activate  # Mac/Linux
 
 # install dependencies
-pip install httpx tenacity
+pip install httpx tenacity fastapi uvicorn clickhouse-connect sqlalchemy psycopg2-binary
 
-# run tests
+# start databases (Docker required)
+docker start agentops-postgres agentops-clickhouse
+
+# run SDK tests
 python tests/test_span.py
+
+# start the backend
+uvicorn backend.app.main:app --reload --port 8001
+
+# start the dashboard (separate terminal)
+cd frontend && npm run dev
 ```
 
 ## Differentiation
@@ -138,7 +157,7 @@ python tests/test_span.py
 
 | Month | Milestone |
 |---|---|
-| 1 | Python SDK + ingestion gateway + minimal dashboard |
+| 1 | Python SDK + ingestion gateway + dashboard — **complete** |
 | 2 | LangChain + CrewAI + Hermes integrations. HN launch |
 | 3 | Evaluation engine. 3 technical blog posts |
 | 4 | Cost analytics + governance policies. 500 GitHub stars |
