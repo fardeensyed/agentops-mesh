@@ -30,6 +30,9 @@ export default function Dashboard() {
   return (
     <main className="p-8 max-w-5xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">AgentOps Mesh — Traces</h1>
+      <Link href="/analytics" className="text-blue-400 hover:underline text-sm block mb-4">
+  view cost analytics →
+</Link>d
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr className="text-left border-b border-gray-700">

@@ -6,6 +6,8 @@ from .models import User, Project, APIKey
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
+from .auth import verify_api_key
+from .db import SessionLocal
 import clickhouse_connect
 import json
 
@@ -52,12 +54,17 @@ def health():
 def ingest_spans(batch: SpanBatch, authorization: Optional[str] = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing API key")
+
     api_key = authorization.replace("Bearer ", "")
-    if not api_key:
-        raise HTTPException(status_code=401, detail="Invalid API key")
 
-    client = get_clickhouse_client()  # ← fresh client per request
+    db = SessionLocal()
+    try:
+        if not verify_api_key(db, api_key):
+            raise HTTPException(status_code=401, detail="Invalid API key")
+    finally:
+        db.close()
 
+    client = get_clickhouse_client()
     rows = []
     for span in batch.spans:
         rows.append([
@@ -68,7 +75,6 @@ def ingest_spans(batch: SpanBatch, authorization: Optional[str] = Header(None)):
             json.dumps(span.get("attributes", {})),
             json.dumps(span.get("events", [])),
         ])
-
     client.insert(
         "spans", rows,
         column_names=["span_id", "trace_id", "parent_span_id", "name",
@@ -113,3 +119,36 @@ def get_trace_detail(trace_id: str):
     rows = result.result_rows
     spans = [dict(zip(columns, row)) for row in rows]
     return {"trace_id": trace_id, "spans": spans}
+
+    @app.get("/v1/analytics/cost")
+    def cost_analytics():
+     client = get_clickhouse_client()
+    # JSONExtractFloat pulls cost_usd out of the attributes JSON string
+    result = client.query("""
+        SELECT
+            toDate(start_time) as day,
+            count() as total_spans,
+            sumIf(1, status = 'error') as total_errors,
+            sum(JSONExtractFloat(attributes, 'cost_usd')) as total_cost_usd
+        FROM spans
+        WHERE span_kind = 'llm'
+        GROUP BY day
+        ORDER BY day ASC
+    """)
+    columns = result.column_names
+    rows = result.result_rows
+    daily = [dict(zip(columns, row)) for row in rows]
+
+    # overall totals across all time
+    totals = client.query("""
+        SELECT
+            count() as total_llm_calls,
+            sum(JSONExtractFloat(attributes, 'cost_usd')) as total_cost_usd,
+            sumIf(1, status = 'error') as total_errors,
+            count(DISTINCT trace_id) as total_agent_runs
+        FROM spans
+        WHERE span_kind = 'llm'
+    """)
+    totals_row = dict(zip(totals.column_names, totals.result_rows[0]))
+
+    return {"daily": daily, "totals": totals_row}
