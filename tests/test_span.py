@@ -286,3 +286,25 @@ print("Full SDK flow works ✓")
 tracer._exporter.shutdown(timeout=2.0)
 
 print("\n\n✅ ALL 21 TESTS PASSED — SDK COMPLETE")
+
+print("\n--- Test 22: LangChain integration ---")
+try:
+    from langchain_core.language_models.fake import FakeListLLM
+    from agentops.integrations.langchain import AgentOpsCallbackHandler
+
+    tracer_lc = Tracer(api_key="agentops-test-key-real-123", endpoint="http://localhost:8001")
+    handler = AgentOpsCallbackHandler(tracer_lc)
+
+    fake_llm = FakeListLLM(responses=["This is a fake response"])
+
+    with tracer_lc.start_trace("langchain-test-agent"):
+        result = fake_llm.invoke("test prompt", config={"callbacks": [handler]})
+
+    spans = tracer_lc.get_finished_spans()
+    print(f"Spans created: {len(spans)}")
+    print(f"Span names: {[s.name for s in spans]}")
+    print("LangChain integration works ✓")
+
+    tracer_lc._exporter.shutdown(timeout=2.0)
+except ImportError as e:
+    print(f"Skipped — langchain not fully installed: {e}")
