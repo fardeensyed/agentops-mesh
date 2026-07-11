@@ -308,3 +308,13 @@ try:
     tracer_lc._exporter.shutdown(timeout=2.0)
 except ImportError as e:
     print(f"Skipped — langchain not fully installed: {e}")
+
+    print("\n--- Test 23: CrewAI integration patches without error ---")
+try:
+    from agentops.integrations.crewai import patch_crewai
+    tracer_crew = Tracer(api_key="agentops-test-key-real-123", endpoint="http://localhost:8001")
+    patch_crewai(tracer_crew)
+    print("CrewAI patch applied successfully ✓")
+    tracer_crew._exporter.shutdown(timeout=1.0)
+except ImportError as e:
+    print(f"Skipped — crewai not installed: {e}")
