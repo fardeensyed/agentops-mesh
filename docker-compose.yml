@@ -1,0 +1,26 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server
+    container_name: agentops-clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_PASSWORD: agentops123
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+
+  postgres:
+    image: postgres:16
+    container_name: agentops-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_PASSWORD: agentops123
+      POSTGRES_DB: agentops
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  clickhouse_data:
+  postgres_data:
