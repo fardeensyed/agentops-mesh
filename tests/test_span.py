@@ -108,7 +108,7 @@ print("Context cleared ✓")
 print("\n--- Test 12: Basic trace with one span ---")
 from agentops.tracer import Tracer
 
-tracer = Tracer(api_key="test-key-123", endpoint="http://localhost:8001")
+tracer = Tracer(api_key="agentops-test-key-real-123", endpoint="http://localhost:8001")
 
 with tracer.start_trace("research-agent") as root:
     print(f"root span name:    {root.name}")
@@ -120,7 +120,7 @@ print(f"finished spans:    {len(tracer.get_finished_spans())}")  # 1
 
 
 print("\n--- Test 13: Nested spans share trace_id and know their parent ---")
-tracer2 = Tracer(api_key="test-key-123")
+tracer2 = Tracer(api_key="agentops-test-key-real-123", endpoint="http://localhost:8001")
 
 with tracer2.start_trace("multi-step-agent") as root:
     trace_id = root.trace_id
@@ -155,7 +155,7 @@ print(f"\nTotal finished spans: {len(tracer2.get_finished_spans())}")  # 3
 
 
 print("\n--- Test 14: Span captures exception automatically ---")
-tracer3 = Tracer(api_key="test-key-123")
+tracer3 = Tracer(api_key="agentops-test-key-real-123", endpoint="http://localhost:8001")
 
 try:
     with tracer3.start_trace("failing-agent") as root:
@@ -189,7 +189,7 @@ from agentops.span import Span, SpanKind, SpanStatus
 
 exporter = SpanExporter(
     endpoint="http://localhost:8001",
-    api_key="test-key",
+    api_key="agentops-test-key-real-123",
 )
 exporter.start()
 
@@ -229,7 +229,7 @@ print("Shutdown clean ✓")
 print("\n--- Test 19: Tracer auto-enqueues spans to exporter ---")
 from agentops.tracer import Tracer
 
-tracer = Tracer(api_key="test-key", endpoint="http://localhost:8001")
+tracer = Tracer(api_key="agentops-test-key-real-123", endpoint="http://localhost:8001")
 
 with tracer.start_trace("auto-export-test") as root:
     with tracer.start_span("llm.call", SpanKind.LLM) as ctx:
@@ -252,7 +252,7 @@ sys.path.insert(0, "sdk")
 import agentops
 
 tracer = agentops.init(
-    api_key="test-key",
+    api_key="agentops-test-key-real-123",
     endpoint="http://localhost:8001",
     patch_openai=False,  # no openai installed in test env
 )
