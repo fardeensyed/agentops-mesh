@@ -64,3 +64,13 @@ Each request now has its own isolated connection.
 default. In a web server handling concurrent requests, shared 
 connections need either per-request instances or a proper connection 
 pool — never a single global object used across requests.
+
+## 9. ClickHouse table missing after switching to docker-compose
+**Error:** Code: 60. Unknown table expression identifier 'spans'
+**Cause:** Switching from manual `docker run` to `docker-compose up -d` 
+created a brand new ClickHouse container with a fresh, empty volume — 
+the manually-created `spans` table did not carry over.
+**Fix:** Recreated the table manually via `docker exec` + clickhouse-client.
+**Lesson:** Changing how a container is defined/started can silently 
+create a new volume. Always verify schema/tables exist after 
+infrastructure changes before assuming code is broken.

@@ -318,3 +318,16 @@ try:
     tracer_crew._exporter.shutdown(timeout=1.0)
 except ImportError as e:
     print(f"Skipped — crewai not installed: {e}")
+
+print("\n--- Test 24: PII redaction ---")
+import sys
+sys.path.insert(0, ".")
+from backend.app.governance import redact_text, redact_attributes
+
+test_text = "Contact me at john@example.com or 555-123-4567"
+redacted = redact_text(test_text)
+print(f"Original: {test_text}")
+print(f"Redacted: {redacted}")
+assert "@" not in redacted
+assert "REDACTED" in redacted
+print("PII redaction works ✓")
