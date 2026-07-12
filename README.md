@@ -12,7 +12,7 @@
 AgentOps Mesh is an open-source observability and governance platform
 for AI agents. Think Datadog + Sentry, built specifically for
 LLM-powered agents running in production. Framework-agnostic — works
-with LangChain, CrewAI, AutoGen, Hermes Agent, and custom agents.
+with LangChain, CrewAI, OpenAI Assistants, and custom agents.
 
 ## The Problem
 
@@ -38,11 +38,21 @@ with tracer.start_trace("research-agent") as root:
         # your agent code here — fully instrumented
 ```
 
+LangChain and CrewAI agents are traced automatically too — zero
+changes to existing agent code.
+
 ## Live Dashboard
 
 Every trace and span is queryable and clickable in a live Next.js
-dashboard — from the trace list down to individual span waterfalls,
-with error status propagated visually up the tree.
+dashboard — trace list, span waterfall with error propagation, and
+cost/ROI analytics aggregated from real span data.
+
+## Governance
+
+Every span passes through PII redaction (emails, phone numbers, SSNs,
+credit cards auto-detected and redacted) before storage. Per-project
+spend limits are enforced at ingestion time — agents exceeding budget
+are blocked with a clear error, not silently allowed to keep spending.
 
 ## Core Features
 
@@ -51,38 +61,45 @@ with error status propagated visually up the tree.
 - [x] Automatic span lifecycle management with exception capture
 - [x] Background HTTP exporter with batching and retry
 - [x] OpenAI auto-instrumentation
+- [x] LangChain callback integration
+- [x] CrewAI integration
 - [x] FastAPI ingestion gateway
 - [x] ClickHouse trace storage (persistent)
-- [x] PostgreSQL metadata schema (users, projects, api_keys, agent_configs)
-- [x] Next.js dashboard — trace list + span waterfall detail view
-- [ ] Cost & ROI analytics dashboard
-- [ ] Governance layer (PII redaction, spend limits, audit logs)
+- [x] PostgreSQL metadata + real API key authentication
+- [x] Next.js dashboard — trace list, span waterfall, cost analytics
+- [x] Governance layer — PII redaction + spend limit enforcement
+- [x] docker-compose for one-command local setup
+- [ ] Hermes Agent integration
 - [ ] Evaluation studio (trace replay, A/B model testing)
 
 ## Architecture
 
 ```text
-Your AI Agent
+Your AI Agent (LangChain / CrewAI / OpenAI / custom)
 │
 ▼
 Python SDK (this repo)
 ├── span.py       — unit of work data model
 ├── context.py    — propagates trace/span IDs automatically
 ├── tracer.py     — creates and manages span lifecycle
-└── exporter.py   — batches and ships spans over HTTP
+├── exporter.py   — batches and ships spans over HTTP
+└── integrations/ — openai.py, langchain.py, crewai.py
 │
 ▼
 Ingestion Gateway (FastAPI)
+├── API key auth (hashed, PostgreSQL-backed)
+├── Spend limit enforcement
+└── PII redaction
 │
 ├──▶ ClickHouse  (traces — billions of rows, fast aggregation)
-└──▶ PostgreSQL  (metadata — users, projects, API keys)
+└──▶ PostgreSQL  (metadata — users, projects, API keys, spend limits)
 │
 ▼
 Next.js Dashboard
 ├── Trace list view          ✅
 ├── Span waterfall detail    ✅
-├── Cost per task analytics  ⏳
-└── Governance policy controls ⏳
+├── Cost per task analytics  ✅
+└── Governance policy controls (view) ⏳
 ```
 
 ## Tech Stack
@@ -90,77 +107,66 @@ Next.js Dashboard
 | Layer | Technology |
 |---|---|
 | SDK | Python 3.13 + OpenTelemetry-compatible |
-| Ingestion | FastAPI → Go (high throughput) |
+| Ingestion | FastAPI |
 | Trace Storage | ClickHouse |
 | Metadata | PostgreSQL |
 | Frontend | Next.js + Tailwind |
-| Deployment | Docker + Kubernetes |
+| Infra | Docker Compose |
 
 ## Project Status
 
-**Month 1 of 6 — Full stack operational, end-to-end**
+**Month 1 of 6 — Full stack operational, governance-enabled**
 
 | Component | Status |
 |---|---|
-| Span data model | ✅ Complete |
-| Context propagation | ✅ Complete |
-| Tracer (span lifecycle) | ✅ Complete |
-| Background exporter | ✅ Complete |
-| OpenAI auto-instrumentation | ✅ Complete |
-| FastAPI ingestion gateway | ✅ Complete |
+| SDK core (span/context/tracer/exporter) | ✅ Complete |
+| OpenAI / LangChain / CrewAI integrations | ✅ Complete |
+| FastAPI gateway + real Postgres auth | ✅ Complete |
 | ClickHouse + PostgreSQL | ✅ Complete |
-| Next.js dashboard (list + detail) | ✅ Complete |
-| Cost analytics | ⏳ Up next |
-| LangChain / CrewAI integrations | ⏳ Planned |
-| Governance layer | ⏳ Planned |
+| Next.js dashboard (list/detail/analytics) | ✅ Complete |
+| PII redaction + spend limits | ✅ Complete |
+| Hermes Agent integration | ⏳ Up next |
+| Evaluation studio | ⏳ Planned |
 
 See `TROUBLESHOOTING.md` for real issues hit and fixed during development.
 
 ## Getting Started
 
 ```bash
-# clone the repo
 git clone https://github.com/fardeensyed/agentops-mesh.git
 cd agentops-mesh
 
-# create virtual environment
 python -m venv .venv
 .venv\Scripts\activate  # Windows
 source .venv/bin/activate  # Mac/Linux
 
-# install dependencies
-pip install httpx tenacity fastapi uvicorn clickhouse-connect sqlalchemy psycopg2-binary
+pip install -r requirements.txt
 
-# start databases (Docker required)
-docker start agentops-postgres agentops-clickhouse
+docker-compose up -d
+python backend/seed.py          # creates a real API key + spend limit
+python tests/test_span.py       # verify everything works
 
-# run SDK tests
-python tests/test_span.py
-
-# start the backend
 uvicorn backend.app.main:app --reload --port 8001
-
-# start the dashboard (separate terminal)
-cd frontend && npm run dev
+cd frontend && npm run dev      # localhost:3000
 ```
 
 ## Differentiation
 
-- **Framework-agnostic** — one SDK for all agent frameworks
-- **Hermes Agent first-class support** — 140K+ star community,
-  no existing observability tool
-- **Governance-first** — PII redaction, spend limits, audit logs
-  for regulated industries
+- **Framework-agnostic** — one SDK, three frameworks supported already
+- **Governance-first** — PII redaction and spend limits enforced at
+  ingestion, not bolted on later — built for regulated industries
 - **Cost-per-task ROI** — business metrics, not just token counts
+- **Hermes Agent first-class support** (planned) — 140K+ star
+  community, no existing observability tool
 
 ## Roadmap
 
 | Month | Milestone |
 |---|---|
-| 1 | Python SDK + ingestion gateway + dashboard — **complete** |
-| 2 | LangChain + CrewAI + Hermes integrations. HN launch |
+| 1 | SDK + gateway + dashboard + governance — **complete** |
+| 2 | Hermes integration. HN launch |
 | 3 | Evaluation engine. 3 technical blog posts |
-| 4 | Cost analytics + governance policies. 500 GitHub stars |
+| 4 | 500 GitHub stars. 10 design partners |
 | 5 | Hosted cloud version. First paying teams |
 | 6 | YC application or pre-seed raise |
 
