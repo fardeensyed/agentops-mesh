@@ -168,7 +168,7 @@ cd frontend && npm run dev      # localhost:3000
 | 3 | Evaluation engine. 3 technical blog posts |
 | 4 | 500 GitHub stars. 10 design partners |
 | 5 | Hosted cloud version. First paying teams |
-| 6 | YC application or pre-seed raise |
+| 6 | YC application or pre-seed raise not yet done |
 
 ## Contributing
 
